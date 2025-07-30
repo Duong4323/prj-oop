@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.*?>
+<?import javafx.scene.layout.*?>
+
+<AnchorPane xmlns:fx="http://javafx.com/fxml"
+            fx:controller="controller.login.LoginController"
+            stylesheets="@loginDesign.css"
+            prefWidth="1000" prefHeight="600">
+
+    <children>
+        <HBox prefWidth="1000" prefHeight="600"
+              AnchorPane.topAnchor="0.0" AnchorPane.bottomAnchor="0.0"
+              AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0">
+
+            <!-- Panel bên trái -->
+            <VBox alignment="CENTER" spacing="30" prefWidth="600"
+                  style="-fx-background-color: linear-gradient(to bottom right, #004d40, #00796b);">
+                <padding><Insets top="50" bottom="50" left="30" right="30"/></padding>
+
+                <ImageView fitHeight="160" fitWidth="160" preserveRatio="true">
+                    <image>
+                        <Image url="@user_icon.png"/>
+                    </image>
+                </ImageView>
+
+                <Label text="Welcome Admin" style="-fx-font-size: 20px; -fx-text-fill: white;"/>
+            </VBox>
+
+            <!-- Panel bên phải -->
+            <VBox alignment="CENTER" spacing="20" prefWidth="600" style="-fx-padding: 80;">
+                <Label text="Login" style="-fx-font-size: 30px; -fx-text-fill: #00796b;"/>
+
+                <TextField fx:id="usernameField" promptText="Username" prefWidth="350"
+                           style="-fx-background-radius: 8; -fx-font-size: 14px;"/>
+
+                <PasswordField fx:id="passwordField" promptText="Password" prefWidth="350"
+                               style="-fx-background-radius: 8; -fx-font-size: 14px;"/>
+
+                <Button text="Login" onAction="#handleLogin" prefWidth="350"
+                        style="-fx-background-color: linear-gradient(to right, #00796b, #004d40); -fx-text-fill: white; -fx-background-radius: 20; -fx-font-size: 16px;"/>
+
+                <Label fx:id="messageLabel" textFill="red"/>
+            </VBox>
+        </HBox>
+    </children>
+</AnchorPane>

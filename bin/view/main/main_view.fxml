@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<AnchorPane xmlns:fx="http://javafx.com/fxml" fx:controller="controller.MainController">
+    <children>
+        <VBox alignment="CENTER" spacing="20.0" AnchorPane.topAnchor="50.0" AnchorPane.leftAnchor="50.0" AnchorPane.rightAnchor="50.0">
+            <padding>
+                <Insets top="30" right="30" bottom="30" left="30"/>
+            </padding>
+
+            <ToolBar>
+                <Label text="🚗 Vehicle Performance Tracker" style="-fx-font-size: 18px; -fx-font-weight: bold;" />
+                <Pane HBox.hgrow="ALWAYS"/>
+                <Button text="Đăng xuất" onAction="#handleLogout"/>
+            </ToolBar>
+
+            <Label text="Chọn chức năng" style="-fx-font-size: 16px;" />
+
+            <Button text="📋 Quản lý phương tiện" prefWidth="200" />
+            <Button text="🛣️ Quản lý hành trình" prefWidth="200" />
+        </VBox>
+    </children>
+</AnchorPane>

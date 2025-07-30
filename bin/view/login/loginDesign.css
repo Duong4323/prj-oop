@@ -1,0 +1,10 @@
+.text-field, .password-field {
+    -fx-background-radius: 5;
+    -fx-border-color: #ccc;
+    -fx-border-radius: 5;
+    -fx-padding: 8 10;
+}
+
+.button:hover {
+    -fx-background-color: linear-gradient(to right, #009688, #00796b);
+}
