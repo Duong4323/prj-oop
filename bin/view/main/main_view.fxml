@@ -19,9 +19,9 @@
 
             <Label text="Chọn chức năng" style="-fx-font-size: 16px;" />
 
-            <!-- <Button text="📋 Quản lý phương tiện" prefWidth="200" onAction="#goToVehicleManager"/>
-            <Button text="🛣️ Quản lý hành trình" prefWidth="200" onAction="#goToTripManager"/> -->
-            <Button text="📋 Quản lý phương tiện" prefWidth="200"/>
+            <Button text="📋 Quản lý phương tiện" prefWidth="200" onAction="#goToVehicleManager"/>
+            <!-- <Button text="🛣️ Quản lý hành trình" prefWidth="200" onAction="#goToTripManager"/>
+            <Button text="📋 Quản lý phương tiện" prefWidth="200"/> -->
             <Button text="🛣️ Quản lý hành trình" prefWidth="200" />
         </VBox>
     </children>

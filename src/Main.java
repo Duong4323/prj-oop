@@ -3,19 +3,27 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
+import model.MongoDBConnection; // import lớp kết nối
 
 public class Main extends Application {
 
     @Override
     public void start(Stage primaryStage) {
         try {
-            Parent root = FXMLLoader.load(getClass().getResource("/view/login/login_view.fxml"));
-            Scene scene = new Scene(root, 800, 600);
+            // Kiểm tra kết nối MongoDB
+            MongoDBConnection.getDatabase(); // Khởi tạo kết nối (nếu lỗi sẽ throw exception)
+
+            // Load giao diện
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/view/login/login_view.fxml"));
+            Parent root = loader.load();
+
+            Scene scene = new Scene(root);
             primaryStage.setTitle("Vehicle Performance Tracker - Login");
             primaryStage.setScene(scene);
+            primaryStage.setResizable(false);
             primaryStage.show();
         } catch (Exception e) {
-            e.printStackTrace(); // Log lỗi nếu không load được FXML
+            e.printStackTrace();
         }
     }
 

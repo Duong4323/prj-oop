@@ -12,17 +12,17 @@ import java.io.IOException;
 
 public class MainController {
 
-    // @FXML
-    // private void goToVehicleManager(ActionEvent event) {
-    //     try {
-    //         Parent vehicleView = FXMLLoader.load(getClass().getResource("/view/vehicle/vehicle_view.fxml"));
-    //         Scene scene = new Scene(vehicleView);
-    //         Stage stage = (Stage)((Node)event.getSource()).getScene().getWindow();
-    //         stage.setScene(scene);
-    //     } catch (IOException e) {
-    //         e.printStackTrace();
-    //     }
-    // }
+    @FXML
+    private void goToVehicleManager(ActionEvent event) {
+        try {
+            Parent vehicleView = FXMLLoader.load(getClass().getResource("/view/vehicle/vehicle_view.fxml"));
+            Scene scene = new Scene(vehicleView);
+            Stage stage = (Stage)((Node)event.getSource()).getScene().getWindow();
+            stage.setScene(scene);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
     // @FXML
     // private void goToTripManager(ActionEvent event) {
