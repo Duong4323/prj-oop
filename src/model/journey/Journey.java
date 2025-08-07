@@ -16,9 +16,11 @@ public class Journey {
     private double maxRpm;
     private double fuelConsumption;
     private List<SensorReading> sensorDataList;
+    private int measurementCount; // Số lần đo
 
     public Journey() {
         this.sensorDataList = new ArrayList<>();
+        this.measurementCount = 0;
     }
 
     public Journey(String vehicleId, double totalTime, double distance, double averageSpeed, double averageRpm, double maxRpm, double fuelConsumption, List<SensorReading> sensorDataList) {
@@ -30,6 +32,7 @@ public class Journey {
         this.maxRpm = maxRpm;
         this.fuelConsumption = fuelConsumption;
         this.sensorDataList = sensorDataList != null ? sensorDataList : new ArrayList<>();
+        this.measurementCount = sensorDataList != null ? sensorDataList.size() : 0;
     }
 
     // Getters and Setters
@@ -50,8 +53,16 @@ public class Journey {
     public double getFuelConsumption() { return fuelConsumption; }
     public void setFuelConsumption(double fuelConsumption) { this.fuelConsumption = fuelConsumption; }
     public List<SensorReading> getSensorDataList() { return sensorDataList; }
-    public void setSensorDataList(List<SensorReading> sensorDataList) { this.sensorDataList = sensorDataList != null ? sensorDataList : new ArrayList<>(); }
-    public void addSensorReading(SensorReading reading) { this.sensorDataList.add(reading); }
+    public void setSensorDataList(List<SensorReading> sensorDataList) { 
+        this.sensorDataList = sensorDataList != null ? sensorDataList : new ArrayList<>();
+        this.measurementCount = this.sensorDataList.size();
+    }
+    public void addSensorReading(SensorReading reading) { 
+        this.sensorDataList.add(reading);
+        this.measurementCount = this.sensorDataList.size();
+    }
+    public int getMeasurementCount() { return measurementCount; }
+    public void setMeasurementCount(int measurementCount) { this.measurementCount = measurementCount; } // Thêm phương thức này
 
     public static Journey fromDocument(Document doc) {
         String id = doc.getObjectId("_id").toString();
@@ -70,13 +81,28 @@ public class Journey {
                 sensorReadings.add(SensorReading.fromDocument(sensorDoc));
             }
         }
+        int measurementCount = sensorReadings.size();
 
         Journey journey = new Journey(vehicleId, totalTime, distance, averageSpeed, averageRpm, maxRpm, fuelConsumption, sensorReadings);
         journey.setId(id);
+        journey.setMeasurementCount(measurementCount);
         return journey;
     }
 
     public PerformanceReport generatePerformanceReport() {
         return PerformanceReport.fromJourney(this);
+    }
+
+    public Document toDocument() {
+        return new Document()
+                .append("vehicleId", vehicleId)
+                .append("totalTime", totalTime)
+                .append("distance", distance)
+                .append("averageSpeed", averageSpeed)
+                .append("averageRpm", averageRpm)
+                .append("maxRpm", maxRpm)
+                .append("fuelConsumption", fuelConsumption)
+                .append("sensorDataList", sensorDataList.stream().map(SensorReading::toDocument).toList())
+                .append("measurementCount", measurementCount); // Thêm vào tài liệu
     }
 }

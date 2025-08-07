@@ -13,7 +13,8 @@
 
                 <HBox spacing="10" alignment="CENTER_LEFT">
                     <Button fx:id="addButton" text="Add" onAction="#showAddJourney" style="-fx-font-size: 14px;"/>
-                    <TextField fx:id="searchField" promptText="Search by License or Distance" prefWidth="400"/>
+                    <Button fx:id="importCsvButton" text="Import CSV" onAction="#importFromCsv" style="-fx-font-size: 14px;"/> <!-- Thêm nút này -->
+                    <TextField fx:id="searchField" promptText="Search by License or Distance" prefWidth="300"/>
                     <Button fx:id="searchButton" text="Search" onAction="#setupSearch" style="-fx-font-size: 14px;"/>
                 </HBox>
 

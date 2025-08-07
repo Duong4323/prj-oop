@@ -7,14 +7,22 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
+import javafx.stage.FileChooser;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
 import model.journey.Journey;
 import model.journey.JourneyDatabase;
 import model.journey.PerformanceReport;
+import model.journey.SensorReading;
 import model.vehicle.Vehicle;
 import model.vehicle.VehicleDatabase;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 public class JourneyController {
@@ -24,6 +32,7 @@ public class JourneyController {
     @FXML private Button generateReportButton;
     @FXML private TextField searchField;
     @FXML private Button searchButton;
+    @FXML private Button importCsvButton;
 
     private ObservableList<HBox> journeyList = FXCollections.observableArrayList();
     private Stage addStage;
@@ -32,6 +41,9 @@ public class JourneyController {
     public void initialize() {
         loadJourneys();
         setupListView();
+        addButton.setOnAction(event -> showAddJourney());
+        importCsvButton.setOnAction(event -> importFromCsv());
+        searchButton.setOnAction(event -> setupSearch());
     }
 
     private void loadJourneys() {
@@ -186,5 +198,85 @@ public class JourneyController {
 
     public void refreshJourneys() {
         loadJourneys();
+    }
+
+    @FXML
+    public void importFromCsv() {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Chọn file CSV");
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("CSV Files", "*.csv"));
+        File selectedFile = fileChooser.showOpenDialog(addStage != null ? addStage : new Stage());
+
+        if (selectedFile != null) {
+            try (BufferedReader br = new BufferedReader(new FileReader(selectedFile))) {
+                String line;
+                boolean firstLine = true; // Bỏ qua header nếu có
+                while ((line = br.readLine()) != null) {
+                    if (firstLine) {
+                        firstLine = false;
+                        continue;
+                    }
+                    String[] data = line.split(",");
+                    if (data.length < 3) continue; // Đảm bảo đủ cột cơ bản (vehicleId, totalTime, distance)
+
+                    String vehicleId = data[0].trim();
+                    double totalTime = Double.parseDouble(data[1].trim());
+                    double distance = Double.parseDouble(data[2].trim());
+
+                    List<SensorReading> sensorReadings = new ArrayList<>();
+                    int measurementCount = 0;
+                    for (int i = 3; i < data.length; i++) {
+                        String[] sensorData = data[i].split("\\|");
+                        if (sensorData.length == 3) { // Chỉ cần instantSpeed, fuelConsumption, rpm
+                            LocalDateTime timestamp = LocalDateTime.now(); // Gán thời gian hiện tại
+                            double instantSpeed = Double.parseDouble(sensorData[0].trim());
+                            double sensorFuelConsumption = Double.parseDouble(sensorData[1].trim());
+                            double rpm = Double.parseDouble(sensorData[2].trim());
+                            sensorReadings.add(new SensorReading(timestamp, instantSpeed, sensorFuelConsumption, rpm));
+                            measurementCount++;
+                        }
+                    }
+
+                    // Tính toán các giá trị dựa trên sensorReadings
+                    double averageSpeed = calculateAverageSpeed(sensorReadings, totalTime, distance);
+                    double averageRpm = calculateAverageRpm(sensorReadings);
+                    double maxRpm = calculateMaxRpm(sensorReadings);
+                    double fuelConsumption = calculateFuelConsumption(sensorReadings, distance);
+
+                    Journey journey = new Journey(vehicleId, totalTime, distance, averageSpeed, averageRpm, maxRpm, fuelConsumption, sensorReadings);
+                    journey.setMeasurementCount(measurementCount);
+                    JourneyDatabase.addJourney(journey);
+                }
+                loadJourneys(); // Cập nhật danh sách sau khi import
+            } catch (IOException | NumberFormatException e) {
+                e.printStackTrace();
+                showAlert("Lỗi", "Không thể nhập file CSV: " + e.getMessage());
+            }
+        }
+    }
+
+    private double calculateAverageSpeed(List<SensorReading> sensorReadings, double totalTime, double distance) {
+        if (sensorReadings.isEmpty() || totalTime <= 0) {
+            return distance / totalTime; // Dùng distance và totalTime nếu có
+        }
+        double totalSpeed = sensorReadings.stream().mapToDouble(SensorReading::getInstantSpeed).sum();
+        return totalSpeed / sensorReadings.size();
+    }
+
+    private double calculateAverageRpm(List<SensorReading> sensorReadings) {
+        if (sensorReadings.isEmpty()) return 0.0;
+        double totalRpm = sensorReadings.stream().mapToDouble(SensorReading::getRpm).sum();
+        return totalRpm / sensorReadings.size();
+    }
+
+    private double calculateMaxRpm(List<SensorReading> sensorReadings) {
+        if (sensorReadings.isEmpty()) return 0.0;
+        return sensorReadings.stream().mapToDouble(SensorReading::getRpm).max().orElse(0.0);
+    }
+
+    private double calculateFuelConsumption(List<SensorReading> sensorReadings, double distance) {
+        if (sensorReadings.isEmpty() || distance <= 0) return 0.0;
+        double totalFuel = sensorReadings.stream().mapToDouble(SensorReading::getFuelConsumption).sum();
+        return (totalFuel / distance) * 100; // L/100km
     }
 }
