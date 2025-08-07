@@ -2,6 +2,8 @@ package controller.journey;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
+import javafx.scene.layout.VBox;
+import javafx.scene.layout.HBox;
 import javafx.stage.Stage;
 import model.journey.Journey;
 import model.journey.JourneyDatabase;
@@ -16,39 +18,27 @@ import java.util.List;
 public class AddJourneyController {
 
     @FXML private ComboBox<String> vehicleComboBox;
-    @FXML private DatePicker startDatePicker;
-    @FXML private Spinner<Integer> startHourSpinner;
-    @FXML private Spinner<Integer> startMinuteSpinner;
-    @FXML private DatePicker endDatePicker;
-    @FXML private Spinner<Integer> endHourSpinner;
-    @FXML private Spinner<Integer> endMinuteSpinner;
+    @FXML private TextField totalTimeField;
     @FXML private TextField distanceField;
-    @FXML private DatePicker sensorDatePicker;
-    @FXML private Spinner<Integer> sensorHourSpinner;
-    @FXML private Spinner<Integer> sensorMinuteSpinner;
-    @FXML private TextField sensorSpeedField;
-    @FXML private TextField sensorFuelField;
-    @FXML private TextField sensorRpmField;
+    @FXML private TextField measurementCountField;
+    @FXML private VBox measurementsVBox;
+    @FXML private Button saveButton;
+    @FXML private Button cancelButton;
 
     private Journey selectedJourney;
     private JourneyController parentController;
+    private List<Measurement> measurements = new ArrayList<>();
 
     @FXML
     public void initialize() {
-        // Khởi tạo Spinner
-        startHourSpinner.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(0, 23, 0));
-        startMinuteSpinner.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(0, 59, 0));
-        endHourSpinner.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(0, 23, 0));
-        endMinuteSpinner.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(0, 59, 0));
-        sensorHourSpinner.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(0, 23, 0));
-        sensorMinuteSpinner.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(0, 59, 0));
+        loadVehicles();
+        setupMeasurementFields();
+        if (selectedJourney != null) {
+            populateFields(selectedJourney);
+        }
     }
 
-    public void setParentController(JourneyController parentController) {
-        this.parentController = parentController;
-    }
-
-    public void initializeAddForm(Journey journey) {
+    private void loadVehicles() {
         try (VehicleDatabase db = new VehicleDatabase()) {
             List<Vehicle> vehicles = db.getAllVehicles();
             vehicleComboBox.getItems().clear();
@@ -58,37 +48,72 @@ public class AddJourneyController {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
 
-        if (journey != null) {
-            selectedJourney = journey;
-            vehicleComboBox.setValue(getLicensePlateForVehicleId(journey.getVehicleId()));
-            startDatePicker.setValue(journey.getStartTime().toLocalDate());
-            startHourSpinner.getValueFactory().setValue(journey.getStartTime().getHour());
-            startMinuteSpinner.getValueFactory().setValue(journey.getStartTime().getMinute());
-            endDatePicker.setValue(journey.getEndTime().toLocalDate());
-            endHourSpinner.getValueFactory().setValue(journey.getEndTime().getHour());
-            endMinuteSpinner.getValueFactory().setValue(journey.getEndTime().getMinute());
-            distanceField.setText(String.valueOf(journey.getDistance()));
-            if (!journey.getSensorDataList().isEmpty()) {
-                SensorReading reading = journey.getSensorDataList().get(0);
-                sensorDatePicker.setValue(reading.getTimestamp().toLocalDate());
-                sensorHourSpinner.getValueFactory().setValue(reading.getTimestamp().getHour());
-                sensorMinuteSpinner.getValueFactory().setValue(reading.getTimestamp().getMinute());
-                sensorFuelField.setText(String.valueOf(reading.getFuelConsumption()));
-                sensorRpmField.setText(String.valueOf(reading.getRpm()));
+    public void setParentController(JourneyController parentController) {
+        this.parentController = parentController;
+    }
+
+    public void initializeAddForm(Journey journey) {
+        this.selectedJourney = journey;
+        initialize();
+    }
+
+    private void setupMeasurementFields() {
+        measurementsVBox.getChildren().clear();
+        measurementCountField.textProperty().addListener((obs, oldVal, newVal) -> {
+            try {
+                int count = Integer.parseInt(newVal);
+                updateMeasurementFields(count);
+            } catch (NumberFormatException e) {
+                // Bỏ qua nếu không phải số
             }
-        } else {
-            selectedJourney = null;
-            clearFields();
+        });
+        updateMeasurementFields(0); // Khởi tạo với 0 lần đo
+    }
+
+    private void updateMeasurementFields(int count) {
+        measurementsVBox.getChildren().clear();
+        measurements.clear();
+        for (int i = 0; i < count; i++) {
+            HBox hbox = new HBox(10);
+            TextField speedField = new TextField();
+            speedField.setPromptText("Speed (km/h)");
+            TextField rpmField = new TextField();
+            rpmField.setPromptText("RPM");
+            TextField fuelLevelField = new TextField();
+            fuelLevelField.setPromptText("Fuel Level");
+            hbox.getChildren().addAll(new Label("Measurement " + (i + 1) + ":"), speedField, rpmField, fuelLevelField);
+            measurementsVBox.getChildren().add(hbox);
+            measurements.add(new Measurement(speedField, rpmField, fuelLevelField));
+        }
+    }
+
+    private void populateFields(Journey journey) {
+        if (journey != null) {
+            vehicleComboBox.setValue(getLicensePlateForVehicleId(journey.getVehicleId()));
+            totalTimeField.setText(String.valueOf(journey.getTotalTime()));
+            distanceField.setText(String.valueOf(journey.getDistance()));
+            // Cập nhật số lần đo dựa trên sensorDataList (nếu có)
+            if (!journey.getSensorDataList().isEmpty()) {
+                measurementCountField.setText(String.valueOf(journey.getSensorDataList().size()));
+                updateMeasurementFields(journey.getSensorDataList().size());
+                for (int i = 0; i < journey.getSensorDataList().size(); i++) {
+                    SensorReading reading = journey.getSensorDataList().get(i);
+                    measurements.get(i).speedField.setText(String.valueOf(reading.getInstantSpeed()));
+                    measurements.get(i).rpmField.setText(String.valueOf(reading.getRpm()));
+                    measurements.get(i).fuelLevelField.setText(String.valueOf(reading.getFuelConsumption()));
+                }
+            }
         }
     }
 
     @FXML
-    private void handleAddJourney() {
+    private void handleSave() {
         try {
             String selectedVehicle = vehicleComboBox.getValue();
             if (selectedVehicle == null) {
-                showAlert("Thiếu thông tin", "Vui lòng chọn xe từ danh sách.");
+                showAlert("Thiếu thông tin", "Vui lòng chọn xe.");
                 return;
             }
 
@@ -98,64 +123,71 @@ public class AddJourneyController {
                 return;
             }
 
-            if (startDatePicker.getValue() == null || endDatePicker.getValue() == null) {
-                showAlert("Thiếu thông tin", "Vui lòng chọn ngày bắt đầu và kết thúc.");
-                return;
-            }
-            int startHour = startHourSpinner.getValue();
-            int startMinute = startMinuteSpinner.getValue();
-            int endHour = endHourSpinner.getValue();
-            int endMinute = endMinuteSpinner.getValue();
-            LocalDateTime start = startDatePicker.getValue().atTime(startHour, startMinute);
-            LocalDateTime end = endDatePicker.getValue().atTime(endHour, endMinute);
+            double totalTime = Double.parseDouble(totalTimeField.getText().trim());
             double distance = Double.parseDouble(distanceField.getText().trim());
+            int measurementCount = Integer.parseInt(measurementCountField.getText().trim());
 
-            if (distance <= 0) {
-                showAlert("Thiếu thông tin", "Vui lòng nhập quãng đường hợp lệ.");
+            if (totalTime <= 0 || distance <= 0 || measurementCount <= 0) {
+                showAlert("Thiếu thông tin", "Vui lòng nhập giá trị hợp lệ cho tổng thời gian, quãng đường và số lần đo.");
                 return;
             }
 
             List<SensorReading> sensorReadings = new ArrayList<>();
-            if (sensorDatePicker.getValue() != null && !sensorSpeedField.getText().trim().isEmpty() &&
-                !sensorFuelField.getText().trim().isEmpty() && !sensorRpmField.getText().trim().isEmpty()) {
-                int sensorHour = sensorHourSpinner.getValue();
-                int sensorMinute = sensorMinuteSpinner.getValue();
-                double speed = Double.parseDouble(sensorSpeedField.getText().trim());
-                double fuel = Double.parseDouble(sensorFuelField.getText().trim());
-                double rpm = Double.parseDouble(sensorRpmField.getText().trim());
-
-                if (speed <= 0 || fuel < 0 || rpm <= 0) {
-                    showAlert("Lỗi dữ liệu", "Vui lòng nhập đầy đủ và hợp lệ các trường cảm biến.");
+            for (int i = 0; i < measurementCount; i++) {
+                Measurement m = measurements.get(i);
+                double speed = Double.parseDouble(m.speedField.getText().trim());
+                double rpm = Double.parseDouble(m.rpmField.getText().trim());
+                double fuelLevel = Double.parseDouble(m.fuelLevelField.getText().trim());
+                if (speed <= 0 || rpm <= 0 || fuelLevel < 0) {
+                    showAlert("Lỗi dữ liệu", "Vui lòng nhập giá trị hợp lệ cho vận tốc, RPM và mức nhiên liệu.");
                     return;
                 }
-
-                LocalDateTime sensorTime = sensorDatePicker.getValue().atTime(sensorHour, sensorMinute);
-                sensorReadings.add(new SensorReading(sensorTime, speed, fuel, rpm));
-            } else {
-                showAlert("Thiếu thông tin", "Vui lòng nhập ít nhất một bộ dữ liệu cảm biến.");
-                return;
+                sensorReadings.add(new SensorReading(LocalDateTime.now(), speed, fuelLevel, rpm));
             }
 
-            Journey journey = new Journey(vehicleId, start, end, distance, sensorReadings);
+            Journey journey = createJourney(vehicleId, totalTime, distance, sensorReadings);
             if (selectedJourney != null) {
                 journey.setId(selectedJourney.getId());
                 JourneyDatabase.updateJourney(journey);
             } else {
                 JourneyDatabase.addJourney(journey);
-            }
-            if (parentController != null) {
-                parentController.refreshJourneys(); // Cập nhật danh sách trong JourneyController
+                try (VehicleDatabase vehicleDb = new VehicleDatabase()) {
+                    Vehicle vehicle = vehicleDb.getVehicleById(vehicleId);
+                    if (vehicle != null) {
+                        vehicle.incrementJourneyCount();
+                        vehicleDb.updateVehicle(vehicle);
+                    }
+                }
             }
             closeAddJourney();
+            if (parentController != null) {
+                parentController.refreshJourneys();
+            }
         } catch (NumberFormatException e) {
-            showAlert("Lỗi dữ liệu", "Vui lòng nhập số hợp lệ cho quãng đường, tốc độ, nhiên liệu, và RPM.");
+            showAlert("Lỗi dữ liệu", "Vui lòng nhập số hợp lệ.");
         } catch (Exception e) {
             e.printStackTrace();
-            showAlert("Lỗi", "Vui lòng kiểm tra dữ liệu nhập.");
+            showAlert("Lỗi", "Không thể lưu hành trình: " + e.getMessage());
         }
     }
 
+    private Journey createJourney(String vehicleId, double totalTime, double distance, List<SensorReading> sensorReadings) {
+        // Tính toán các thông số tổng hợp
+        double averageSpeed = (distance > 0 && totalTime > 0) ? distance / totalTime : 0.0;
+        double averageRpm = sensorReadings.stream().mapToDouble(SensorReading::getRpm).average().orElse(0.0);
+        double maxRpm = sensorReadings.stream().mapToDouble(SensorReading::getRpm).max().orElse(0.0);
+        double fuelConsumption = (sensorReadings.stream().mapToDouble(SensorReading::getFuelConsumption).max().orElse(0.0) -
+                sensorReadings.stream().mapToDouble(SensorReading::getFuelConsumption).min().orElse(0.0)) / distance;
+
+        // Tạo Journey
+        return new Journey(vehicleId, totalTime, distance, averageSpeed, averageRpm, maxRpm, fuelConsumption, sensorReadings);
+    }
+
     @FXML
+    private void handleCancel() {
+        closeAddJourney();
+    }
+
     private void closeAddJourney() {
         Stage stage = (Stage) vehicleComboBox.getScene().getWindow();
         stage.close();
@@ -189,28 +221,24 @@ public class AddJourneyController {
         return null;
     }
 
-    private void clearFields() {
-        vehicleComboBox.setValue(null);
-        startDatePicker.setValue(null);
-        startHourSpinner.getValueFactory().setValue(0);
-        startMinuteSpinner.getValueFactory().setValue(0);
-        endDatePicker.setValue(null);
-        endHourSpinner.getValueFactory().setValue(0);
-        endMinuteSpinner.getValueFactory().setValue(0);
-        distanceField.clear();
-        sensorDatePicker.setValue(null);
-        sensorHourSpinner.getValueFactory().setValue(0);
-        sensorMinuteSpinner.getValueFactory().setValue(0);
-        sensorSpeedField.clear();
-        sensorFuelField.clear();
-        sensorRpmField.clear();
-    }
-
     private void showAlert(String title, String content) {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle(title);
         alert.setHeaderText(null);
         alert.setContentText(content);
         alert.showAndWait();
+    }
+
+    // Lớp nội bộ để quản lý các lần đo
+    private static class Measurement {
+        TextField speedField;
+        TextField rpmField;
+        TextField fuelLevelField;
+
+        Measurement(TextField speedField, TextField rpmField, TextField fuelLevelField) {
+            this.speedField = speedField;
+            this.rpmField = rpmField;
+            this.fuelLevelField = fuelLevelField;
+        }
     }
 }

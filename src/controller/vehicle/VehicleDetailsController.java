@@ -8,11 +8,12 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.stage.Stage;
 import model.journey.Journey;
 import model.journey.JourneyDatabase;
+import model.journey.PerformanceReport;
 import model.vehicle.Vehicle;
 import javafx.collections.FXCollections;
 import javafx.scene.control.Alert;
 
-import java.time.LocalDateTime;
+import java.time.Duration;
 import java.util.List;
 
 public class VehicleDetailsController {
@@ -20,10 +21,11 @@ public class VehicleDetailsController {
     @FXML private Label licensePlateLabel, brandLabel, modelLabel, yearLabel;
     @FXML private TableView<Journey> tripTableView;
     @FXML private TableColumn<Journey, String> tripIdColumn;
-    @FXML private TableColumn<Journey, LocalDateTime> dateColumn;
+    @FXML private TableColumn<Journey, Double> averageSpeedColumn;
+    @FXML private TableColumn<Journey, Double> averageRpmColumn;
+    @FXML private TableColumn<Journey, Double> averageFuelConsumptionColumn;
     @FXML private TableColumn<Journey, Double> distanceColumn;
-    @FXML private TableColumn<Journey, String> destinationColumn;
-    @FXML private TableColumn<Journey, Double> avgSpeedColumn; // Thêm cột mới cho avgSpeed
+    @FXML private TableColumn<Journey, String> totalTimeColumn;
 
     private Stage stage;
 
@@ -41,10 +43,22 @@ public class VehicleDetailsController {
 
     @FXML
     private void initialize() {
+        // Gán các cột với giá trị từ Journey
         tripIdColumn.setCellValueFactory(new PropertyValueFactory<>("vehicleId"));
-        dateColumn.setCellValueFactory(new PropertyValueFactory<>("startTime"));
+        averageSpeedColumn.setCellValueFactory(new PropertyValueFactory<>("averageSpeed"));
+        averageRpmColumn.setCellValueFactory(new PropertyValueFactory<>("averageRpm"));
+        averageFuelConsumptionColumn.setCellValueFactory(cellData -> {
+            Journey journey = cellData.getValue();
+            PerformanceReport report = journey.generatePerformanceReport();
+            return new javafx.beans.property.SimpleDoubleProperty(report.getAverageFuelConsumption()).asObject();
+        });
         distanceColumn.setCellValueFactory(new PropertyValueFactory<>("distance"));
-        avgSpeedColumn.setCellValueFactory(new PropertyValueFactory<>("avgSpeed")); // Gán giá trị avgSpeed
+        totalTimeColumn.setCellValueFactory(cellData -> {
+            Journey journey = cellData.getValue();
+            PerformanceReport report = journey.generatePerformanceReport();
+            long hours = report.getTotalOperatingTime().toHours();
+            return new javafx.beans.property.SimpleStringProperty(String.format("%d giờ", hours));
+        });
     }
 
     private void loadTrips(String vehicleId) {

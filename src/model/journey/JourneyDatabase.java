@@ -18,10 +18,13 @@ public class JourneyDatabase {
     public static void addJourney(Journey j) {
         Document doc = new Document()
                 .append("vehicleId", j.getVehicleId())
-                .append("startTime", j.getStartTime().toString())
-                .append("endTime", j.getEndTime().toString())
+                .append("totalTime", j.getTotalTime())
                 .append("distance", j.getDistance())
-                .append("sensorData", j.getSensorDataList().stream().map(SensorReading::toDocument).collect(Collectors.toList()));
+                .append("", j.getAverageSpeed())
+                .append("averageRpm", j.getAverageRpm())
+                .append("maxRpm", j.getMaxRpm())
+                .append("fuelConsumption", j.getFuelConsumption())
+                .append("sensorDataList", j.getSensorDataList().stream().map(SensorReading::toDocument).collect(Collectors.toList()));
         collection.insertOne(doc);
         // Cập nhật id sau khi insert (MongoDB tự sinh ObjectId)
         Document insertedDoc = collection.find(doc).first();
@@ -68,10 +71,13 @@ public class JourneyDatabase {
         Document update = new Document()
                 .append("$set", new Document()
                         .append("vehicleId", journey.getVehicleId())
-                        .append("startTime", journey.getStartTime().toString())
-                        .append("endTime", journey.getEndTime().toString())
+                        .append("totalTime", journey.getTotalTime())
                         .append("distance", journey.getDistance())
-                        .append("sensorData", journey.getSensorDataList().stream().map(SensorReading::toDocument).collect(Collectors.toList())));
+                        .append("averageSpeed", journey.getAverageSpeed())
+                        .append("averageRpm", journey.getAverageRpm())
+                        .append("maxRpm", journey.getMaxRpm())
+                        .append("fuelConsumption", journey.getFuelConsumption())
+                        .append("sensorDataList", journey.getSensorDataList().stream().map(SensorReading::toDocument).collect(Collectors.toList())));
         collection.updateOne(filter, update);
         System.out.println("Journey updated successfully.");
 

@@ -1,5 +1,6 @@
 package model.journey;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -8,21 +9,26 @@ import org.bson.Document;
 public class Journey {
     private String id;
     private String vehicleId;
-    private LocalDateTime startTime;
-    private LocalDateTime endTime;
+    private double totalTime; // Tổng số giờ đi
     private double distance;
+    private double averageSpeed;
+    private double averageRpm;
+    private double maxRpm;
+    private double fuelConsumption;
     private List<SensorReading> sensorDataList;
 
     public Journey() {
         this.sensorDataList = new ArrayList<>();
     }
 
-    public Journey(String vehicleId, LocalDateTime startTime, LocalDateTime endTime,
-                   double distance, List<SensorReading> sensorDataList) {
+    public Journey(String vehicleId, double totalTime, double distance, double averageSpeed, double averageRpm, double maxRpm, double fuelConsumption, List<SensorReading> sensorDataList) {
         this.vehicleId = vehicleId;
-        this.startTime = startTime;
-        this.endTime = endTime;
+        this.totalTime = totalTime;
         this.distance = distance;
+        this.averageSpeed = averageSpeed;
+        this.averageRpm = averageRpm;
+        this.maxRpm = maxRpm;
+        this.fuelConsumption = fuelConsumption;
         this.sensorDataList = sensorDataList != null ? sensorDataList : new ArrayList<>();
     }
 
@@ -31,12 +37,18 @@ public class Journey {
     public void setId(String id) { this.id = id; }
     public String getVehicleId() { return vehicleId; }
     public void setVehicleId(String vehicleId) { this.vehicleId = vehicleId; }
-    public LocalDateTime getStartTime() { return startTime; }
-    public void setStartTime(LocalDateTime startTime) { this.startTime = startTime; }
-    public LocalDateTime getEndTime() { return endTime; }
-    public void setEndTime(LocalDateTime endTime) { this.endTime = endTime; }
+    public double getTotalTime() { return totalTime; }
+    public void setTotalTime(double totalTime) { this.totalTime = totalTime; }
     public double getDistance() { return distance; }
     public void setDistance(double distance) { this.distance = distance; }
+    public double getAverageSpeed() { return averageSpeed; }
+    public void setAverageSpeed(double averageSpeed) { this.averageSpeed = averageSpeed; }
+    public double getAverageRpm() { return averageRpm; }
+    public void setAverageRpm(double averageRpm) { this.averageRpm = averageRpm; }
+    public double getMaxRpm() { return maxRpm; }
+    public void setMaxRpm(double maxRpm) { this.maxRpm = maxRpm; }
+    public double getFuelConsumption() { return fuelConsumption; }
+    public void setFuelConsumption(double fuelConsumption) { this.fuelConsumption = fuelConsumption; }
     public List<SensorReading> getSensorDataList() { return sensorDataList; }
     public void setSensorDataList(List<SensorReading> sensorDataList) { this.sensorDataList = sensorDataList != null ? sensorDataList : new ArrayList<>(); }
     public void addSensorReading(SensorReading reading) { this.sensorDataList.add(reading); }
@@ -44,45 +56,27 @@ public class Journey {
     public static Journey fromDocument(Document doc) {
         String id = doc.getObjectId("_id").toString();
         String vehicleId = doc.getString("vehicleId");
-        LocalDateTime start = LocalDateTime.parse(doc.getString("startTime"));
-        LocalDateTime end = LocalDateTime.parse(doc.getString("endTime"));
-        double distance = doc.getDouble("distance");
+        double totalTime = doc.getDouble("totalTime") != null ? doc.getDouble("totalTime") : 0.0;
+        double distance = doc.getDouble("distance") != null ? doc.getDouble("distance") : 0.0;
+        double averageSpeed = doc.getDouble("averageSpeed") != null ? doc.getDouble("averageSpeed") : 0.0;
+        double averageRpm = doc.getDouble("averageRpm") != null ? doc.getDouble("averageRpm") : 0.0;
+        double maxRpm = doc.getDouble("maxRpm") != null ? doc.getDouble("maxRpm") : 0.0;
+        double fuelConsumption = doc.getDouble("fuelConsumption") != null ? doc.getDouble("fuelConsumption") : 0.0;
 
         List<SensorReading> sensorReadings = new ArrayList<>();
-        if (doc.containsKey("sensorData")) {
-            List<Document> sensorDocs = (List<Document>) doc.get("sensorData");
+        if (doc.containsKey("sensorDataList")) {
+            List<Document> sensorDocs = (List<Document>) doc.get("sensorDataList");
             for (Document sensorDoc : sensorDocs) {
                 sensorReadings.add(SensorReading.fromDocument(sensorDoc));
             }
         }
 
-        Journey journey = new Journey(vehicleId, start, end, distance, sensorReadings);
+        Journey journey = new Journey(vehicleId, totalTime, distance, averageSpeed, averageRpm, maxRpm, fuelConsumption, sensorReadings);
         journey.setId(id);
         return journey;
     }
 
     public PerformanceReport generatePerformanceReport() {
-        if (sensorDataList == null || sensorDataList.isEmpty() || startTime == null || endTime == null) {
-            return new PerformanceReport(0.0, 0.0, 0.0, distance, java.time.Duration.between(startTime != null ? startTime : LocalDateTime.now(), endTime != null ? endTime : LocalDateTime.now()));
-        }
-
-        java.time.Duration duration = java.time.Duration.between(startTime, endTime);
-        double totalHours = duration.toHours() + (duration.toMinutesPart() / 60.0) + (duration.toSecondsPart() / 3600.0);
-        double avgSpeed = totalHours > 0 ? (distance / totalHours) : 0.0;
-        double totalFuel = sensorDataList.stream().mapToDouble(SensorReading::getFuelConsumption).sum();
-        double avgFuel = sensorDataList.isEmpty() ? 0.0 : totalFuel / sensorDataList.size();
-        double maxRpm = sensorDataList.stream().mapToDouble(SensorReading::getRpm).max().orElse(0.0);
-
-        return new PerformanceReport(avgSpeed, avgFuel, maxRpm, distance, duration);
-    }
-
-    // Thêm phương thức getAvgSpeed
-    public Double getAvgSpeed() {
-        if (startTime == null || endTime == null || distance <= 0) {
-            return 0.0;
-        }
-        java.time.Duration duration = java.time.Duration.between(startTime, endTime);
-        double totalHours = duration.toHours() + (duration.toMinutesPart() / 60.0) + (duration.toSecondsPart() / 3600.0);
-        return totalHours > 0 ? (distance / totalHours) : 0.0;
+        return PerformanceReport.fromJourney(this);
     }
 }

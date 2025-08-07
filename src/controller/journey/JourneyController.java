@@ -62,8 +62,7 @@ public class JourneyController {
         StringBuilder journeyInfo = new StringBuilder();
         journeyInfo.append("Xe: ").append(getLicensePlateForVehicleId(journey.getVehicleId()))
                   .append(" | Quãng đường: ").append(journey.getDistance()).append(" km")
-                  .append(" | Time: ").append(journey.getStartTime() != null ? journey.getStartTime() : "N/A")
-                  .append(" - ").append(journey.getEndTime() != null ? journey.getEndTime() : "N/A");
+                  .append(" | Tổng thời gian: ").append(String.format("%.2f", journey.getTotalTime())).append(" giờ");
         Label label = new Label(journeyInfo.toString());
         Button editButton = new Button("Edit");
         Button deleteButton = new Button("Delete");
@@ -96,12 +95,12 @@ public class JourneyController {
                 FXMLLoader loader = new FXMLLoader(getClass().getResource("/view/journey/AddJourney.fxml"));
                 Parent root = loader.load();
                 AddJourneyController controller = loader.getController();
-                controller.setParentController(this); // Truyền tham chiếu để cập nhật danh sách
-                controller.initializeAddForm(null); // Khởi tạo form thêm mới
+                controller.setParentController(this);
+                controller.initializeAddForm(null);
                 addStage = new Stage();
                 addStage.setTitle("Add New Journey");
                 addStage.setScene(new Scene(root));
-                addStage.setOnHidden(e -> loadJourneys()); // Tải lại danh sách khi đóng
+                addStage.setOnHidden(e -> loadJourneys());
                 addStage.show();
             }
         } catch (IOException e) {
@@ -116,12 +115,12 @@ public class JourneyController {
                 FXMLLoader loader = new FXMLLoader(getClass().getResource("/view/journey/AddJourney.fxml"));
                 Parent root = loader.load();
                 AddJourneyController controller = loader.getController();
-                controller.setParentController(this); // Truyền tham chiếu để cập nhật danh sách
-                controller.initializeAddForm(journey); // Khởi tạo form chỉnh sửa
+                controller.setParentController(this);
+                controller.initializeAddForm(journey);
                 addStage = new Stage();
                 addStage.setTitle("Edit Journey");
                 addStage.setScene(new Scene(root));
-                addStage.setOnHidden(e -> loadJourneys()); // Tải lại danh sách khi đóng
+                addStage.setOnHidden(e -> loadJourneys());
                 addStage.show();
             }
         } catch (IOException e) {
@@ -134,12 +133,11 @@ public class JourneyController {
         String vehicleId = journey.getVehicleId();
         JourneyDatabase.deleteJourney(journey.getId());
         
-        // Cập nhật tổng số hành trình của phương tiện
         try (VehicleDatabase vehicleDb = new VehicleDatabase()) {
             Vehicle vehicle = vehicleDb.getVehicleById(vehicleId);
             if (vehicle != null) {
-                vehicle.decrementJourneyCount(); // Giảm số lượng hành trình
-                vehicleDb.updateVehicle(vehicle); // Lưu thay đổi
+                vehicle.decrementJourneyCount();
+                vehicleDb.updateVehicle(vehicle);
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -186,7 +184,6 @@ public class JourneyController {
         alert.showAndWait();
     }
 
-    // Phương thức để AddJourneyController gọi khi cần cập nhật danh sách
     public void refreshJourneys() {
         loadJourneys();
     }
