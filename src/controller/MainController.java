@@ -5,6 +5,7 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 import javafx.scene.Node;
 
@@ -13,36 +14,49 @@ import java.io.IOException;
 public class MainController {
 
     @FXML
-    private void goToVehicleManager(ActionEvent event) {
-        try {
-            Parent vehicleView = FXMLLoader.load(getClass().getResource("/view/vehicle/vehicle_view.fxml"));
-            Scene scene = new Scene(vehicleView);
-            Stage stage = (Stage)((Node)event.getSource()).getScene().getWindow();
-            stage.setScene(scene);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    // @FXML
-    // private void goToTripManager(ActionEvent event) {
-    //     try {
-    //         Parent tripView = FXMLLoader.load(getClass().getResource("/view/trip/trip_view.fxml"));
-    //         Scene scene = new Scene(tripView);
-    //         Stage stage = (Stage)((Node)event.getSource()).getScene().getWindow();
-    //         stage.setScene(scene);
-    //     } catch (IOException e) {
-    //         e.printStackTrace();
-    //     }
-    // }
+    private StackPane mainContentPane;
 
     @FXML
-    private void handleLogout(ActionEvent event) {
+    private void goToVehicleManager() {
+        loadView("/view/vehicle/vehicle_view.fxml");
+    }
+
+    @FXML
+    private void goToJourneyManager() {
+        loadView("/view/journey/JourneyView.fxml");
+    }
+
+    @FXML
+private void handleLogout(ActionEvent event) {
+    try {
+        // Load lại login.fxml
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/view/login/login_view.fxml"));
+        Parent loginRoot = loader.load();
+
+        // Lấy stage hiện tại
+        Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+
+        // Đặt scene mới là login
+        Scene scene = new Scene(loginRoot);
+        stage.setScene(scene);
+        stage.setTitle("Login");
+        stage.show();
+    } catch (IOException e) {
+        e.printStackTrace();
+    }
+}
+
+    @FXML
+private void handleHome() {
+    // Ví dụ: load lại trang chính, hoặc xóa nội dung trung tâm
+    mainContentPane.getChildren().clear();  // nếu bạn dùng StackPane
+}
+
+
+    private void loadView(String fxmlPath) {
         try {
-            Parent loginView = FXMLLoader.load(getClass().getResource("/view/login/login_view.fxml"));
-            Scene scene = new Scene(loginView);
-            Stage stage = (Stage)((Node)event.getSource()).getScene().getWindow();
-            stage.setScene(scene);
+            Parent content = FXMLLoader.load(getClass().getResource(fxmlPath));
+            mainContentPane.getChildren().setAll(content);
         } catch (IOException e) {
             e.printStackTrace();
         }

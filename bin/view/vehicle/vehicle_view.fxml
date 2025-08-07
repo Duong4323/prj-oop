@@ -5,22 +5,32 @@
 <?import javafx.scene.layout.*?>
 
 <AnchorPane xmlns:fx="http://javafx.com/fxml" fx:controller="controller.vehicle.VehicleController">
-    <VBox spacing="10.0" alignment="CENTER" AnchorPane.topAnchor="20.0" AnchorPane.leftAnchor="20.0">
+    <VBox spacing="10.0" alignment="CENTER" AnchorPane.topAnchor="20.0" AnchorPane.leftAnchor="20.0" AnchorPane.rightAnchor="20.0">
         <Label text="Vehicle Management" style="-fx-font-size: 20px;"/>
 
+        <!-- Trường nhập liệu -->
         <HBox spacing="10">
-            <TextField fx:id="idField" promptText="Vehicle ID"/>
-            <TextField fx:id="brandField" promptText="Brand"/>
-            <TextField fx:id="modelField" promptText="Model"/>
-            <TextField fx:id="yearField" promptText="Year"/>
+            <TextField fx:id="licensePlateField" promptText="Biển số xe"/>
+            <TextField fx:id="brandField" promptText="Hãng xe"/>
+            <TextField fx:id="modelField" promptText="Loại xe"/>
+            <TextField fx:id="yearField" promptText="Năm"/>
         </HBox>
 
+        <!-- Nút chức năng -->
         <HBox spacing="10">
             <Button text="Add" onAction="#handleAddVehicle"/>
             <Button text="Update" onAction="#handleUpdateVehicle"/>
             <Button text="Delete" onAction="#handleDeleteVehicle"/>
         </HBox>
 
-        <ListView fx:id="vehicleListView" prefHeight="300"/>
+        <!-- Tìm kiếm -->
+        <HBox spacing="10">
+            <TextField fx:id="searchField" promptText="Search by license plate"/>
+            <Button text="Search" onAction="#handleSearchVehicle"/>
+           
+        </HBox>
+
+        <!-- Danh sách -->
+        <ListView fx:id="vehicleListView" prefHeight="300" prefWidth="600"/>
     </VBox>
 </AnchorPane>

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<AnchorPane xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="controller.journey.JourneyController" prefWidth="700" prefHeight="600">
+    <children>
+        <VBox spacing="15" layoutX="20" layoutY="20" prefWidth="660">
+            <children>
+                <Label text="Journey Management" style="-fx-font-size: 18px; -fx-font-weight: bold;"/>
+
+                <HBox spacing="10" alignment="CENTER_LEFT">
+                    <Button fx:id="addButton" text="Add" onAction="#showAddJourney" style="-fx-font-size: 14px;"/>
+                    <TextField fx:id="searchField" promptText="Search by License or Distance" prefWidth="400"/>
+                    <Button fx:id="searchButton" text="Search" onAction="#setupSearch" style="-fx-font-size: 14px;"/>
+                </HBox>
+
+                <Label text="Journey List" style="-fx-font-size: 14px; -fx-font-weight: bold;"/>
+                <ListView fx:id="journeyListView" prefHeight="200" prefWidth="640"/>
+                <HBox spacing="10" alignment="CENTER">
+                    <Button fx:id="generateReportButton" text="Generate Report" onAction="#handleGenerateReport" style="-fx-font-size: 14px;"/>
+                </HBox>
+            </children>
+            <padding>
+                <Insets top="10" right="10" bottom="10" left="10"/>
+            </padding>
+        </VBox>
+    </children>
+</AnchorPane>

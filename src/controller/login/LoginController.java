@@ -42,7 +42,7 @@ public class LoginController {
             throw new IOException("Resource /view/main/main_view.fxml not found.");
         }
         Stage stage = (Stage) usernameField.getScene().getWindow();
-        stage.setScene(new Scene(mainView, 800, 600));
+        stage.setScene(new Scene(mainView, 1000, 600));
         stage.setTitle("Vehicle Performance Tracker - Dashboard");
     } catch (IOException e) {
         e.printStackTrace();

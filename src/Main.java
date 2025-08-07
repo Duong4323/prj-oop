@@ -18,7 +18,7 @@ public class Main extends Application {
             Parent root = loader.load();
 
             Scene scene = new Scene(root);
-            primaryStage.setTitle("Vehicle Performance Tracker - Login");
+            primaryStage.setTitle("Ứng dụng theo dõi hiệu suất xe");
             primaryStage.setScene(scene);
             primaryStage.setResizable(false);
             primaryStage.show();

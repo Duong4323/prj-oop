@@ -26,7 +26,7 @@
                     </image>
                 </ImageView>
 
-                <Label text="Welcome Admin" style="-fx-font-size: 20px; -fx-text-fill: white;"/>
+                <Label text="Welcome Admin!" style="-fx-font-size: 20px; -fx-text-fill: white;"/>
             </VBox>
 
             <!-- Panel bên phải -->

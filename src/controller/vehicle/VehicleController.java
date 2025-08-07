@@ -4,15 +4,20 @@ import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.collections.*;
 import javafx.scene.input.MouseEvent;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Scene;
+import javafx.stage.Stage;
 import model.vehicle.Vehicle;
 import model.vehicle.VehicleDatabase;
-
+import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.HBox;
+import java.io.IOException;
 import java.util.List;
 
 public class VehicleController {
 
     @FXML
-    private TextField idField, brandField, modelField, yearField;
+    private TextField licensePlateField, brandField, modelField, yearField, searchField;
 
     @FXML
     private ListView<String> vehicleListView;
@@ -24,12 +29,53 @@ public class VehicleController {
     public void initialize() {
         loadVehiclesFromDB();
 
-        // Gán sự kiện click chuột chọn xe
+        // Set custom cell factory for ListView
+        vehicleListView.setCellFactory(param -> new ListCell<String>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                    setGraphic(null);
+                } else {
+                    // Create HBox with Label and Details button
+                    HBox hBox = new HBox(10);
+                    hBox.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+                    Label label = new Label(item);
+                    Button detailsButton = new Button("Details");
+                    detailsButton.setOnAction(event -> {
+                        int index = getIndex();
+                        if (index >= 0 && index < vehicleObjects.size()) {
+                            Vehicle selectedVehicle = vehicleObjects.get(index);
+                            try {
+                                FXMLLoader loader = new FXMLLoader(getClass().getResource("/view/vehicle/VehicleDetails.fxml"));
+                                AnchorPane root = loader.load();
+                                VehicleDetailsController controller = loader.getController();
+                                Stage detailsStage = new Stage();
+                                controller.setStage(detailsStage);
+                                controller.setVehicle(selectedVehicle);
+                                detailsStage.setScene(new Scene(root));
+                                detailsStage.setTitle("Vehicle Details: " + selectedVehicle.getLicensePlate());
+                                detailsStage.show();
+                            } catch (IOException e) {
+                                showAlert("Error", "Failed to load vehicle details.");
+                                e.printStackTrace();
+                            }
+                        } else {
+                            showAlert("No Selection", "Please select a vehicle to view details.");
+                        }
+                    });
+                    hBox.getChildren().addAll(label, detailsButton);
+                    setGraphic(hBox);
+                }
+            }
+        });
+
         vehicleListView.setOnMouseClicked((MouseEvent event) -> {
             int index = vehicleListView.getSelectionModel().getSelectedIndex();
             if (index >= 0 && index < vehicleObjects.size()) {
                 Vehicle selected = vehicleObjects.get(index);
-                idField.setText(selected.getId());
+                licensePlateField.setText(selected.getLicensePlate());
                 brandField.setText(selected.getBrand());
                 modelField.setText(selected.getModel());
                 yearField.setText(String.valueOf(selected.getYear()));
@@ -40,37 +86,40 @@ public class VehicleController {
     private void loadVehiclesFromDB() {
         try (VehicleDatabase db = new VehicleDatabase()) {
             vehicleObjects = db.getAllVehicles();
-
-            vehicleList.clear();
-            for (Vehicle v : vehicleObjects) {
-                vehicleList.add(formatVehicle(v));
-            }
-
-            vehicleListView.setItems(vehicleList);
+            updateListView(vehicleObjects);
         } catch (Exception e) {
             showAlert("Error", "Failed to load vehicles.");
             e.printStackTrace();
         }
     }
 
+    private void updateListView(List<Vehicle> vehicles) {
+        vehicleList.clear();
+        for (Vehicle v : vehicles) {
+            vehicleList.add(formatVehicle(v));
+        }
+        vehicleListView.setItems(vehicleList);
+    }
+
     private String formatVehicle(Vehicle v) {
-        return v.getId() + " - " + v.getBrand() + " " + v.getModel() + " (" + v.getYear() + ")";
+        return v.getLicensePlate() + " - " + v.getBrand() + " " + v.getModel() + " (" + v.getYear() + ") - Journeys: " + v.getTotalJourneys();
     }
 
     @FXML
     private void handleAddVehicle() {
         try {
-            String id = idField.getText().trim();
+            String licensePlate = licensePlateField.getText().trim();
             String brand = brandField.getText().trim();
             String model = modelField.getText().trim();
             int year = Integer.parseInt(yearField.getText().trim());
 
-            if (id.isEmpty() || brand.isEmpty() || model.isEmpty()) {
+            if (licensePlate.isEmpty() || brand.isEmpty() || model.isEmpty()) {
                 showAlert("Missing Fields", "Please fill in all fields.");
                 return;
             }
 
-            Vehicle v = new Vehicle(id, brand, model, year);
+            Vehicle v = new Vehicle(licensePlate, brand, model, year);
+
             try (VehicleDatabase db = new VehicleDatabase()) {
                 db.insertVehicle(v);
             }
@@ -88,19 +137,32 @@ public class VehicleController {
     @FXML
     private void handleUpdateVehicle() {
         try {
-            String id = idField.getText().trim();
+            String licensePlate = licensePlateField.getText().trim();
             String brand = brandField.getText().trim();
             String model = modelField.getText().trim();
             int year = Integer.parseInt(yearField.getText().trim());
 
-            if (id.isEmpty()) {
-                showAlert("Missing ID", "Please select a vehicle to update.");
+            if (licensePlate.isEmpty()) {
+                showAlert("Missing License Plate", "Please select a vehicle to update.");
                 return;
             }
 
-            Vehicle v = new Vehicle(id, brand, model, year);
+            Vehicle existing = vehicleObjects.stream()
+                    .filter(v -> v.getLicensePlate().equalsIgnoreCase(licensePlate))
+                    .findFirst()
+                    .orElse(null);
+
+            if (existing == null) {
+                showAlert("Not Found", "Vehicle not found in list.");
+                return;
+            }
+
+            existing.setBrand(brand);
+            existing.setModel(model);
+            existing.setYear(year);
+
             try (VehicleDatabase db = new VehicleDatabase()) {
-                db.updateVehicle(v);
+                db.updateVehicle(existing);
             }
 
             loadVehiclesFromDB();
@@ -116,14 +178,24 @@ public class VehicleController {
     @FXML
     private void handleDeleteVehicle() {
         try {
-            String id = idField.getText().trim();
-            if (id.isEmpty()) {
-                showAlert("Missing ID", "Please select a vehicle to delete.");
+            String licensePlate = licensePlateField.getText().trim();
+            if (licensePlate.isEmpty()) {
+                showAlert("Missing License Plate", "Please select a vehicle to delete.");
+                return;
+            }
+
+            Vehicle existing = vehicleObjects.stream()
+                    .filter(v -> v.getLicensePlate().equalsIgnoreCase(licensePlate))
+                    .findFirst()
+                    .orElse(null);
+
+            if (existing == null) {
+                showAlert("Not Found", "Vehicle not found.");
                 return;
             }
 
             try (VehicleDatabase db = new VehicleDatabase()) {
-                db.deleteVehicleById(id);
+                db.deleteVehicleById(existing.getVehicleId());
             }
 
             loadVehiclesFromDB();
@@ -134,11 +206,54 @@ public class VehicleController {
         }
     }
 
+    @FXML
+    private void handleSearchVehicle() {
+        String keyword = searchField.getText().trim();
+        if (keyword.isEmpty()) {
+            loadVehiclesFromDB();
+            return;
+        }
+
+        try (VehicleDatabase db = new VehicleDatabase()) {
+            vehicleObjects = db.searchVehicleByLicensePlate(keyword);
+            updateListView(vehicleObjects);
+        } catch (Exception e) {
+            showAlert("Error", "Failed to search vehicles.");
+            e.printStackTrace();
+        }
+    }
+
+    @FXML
+    private void handleShowVehicleDetails() {
+        // This method is no longer used directly by the FXML but kept for potential future use
+        int index = vehicleListView.getSelectionModel().getSelectedIndex();
+        if (index >= 0 && index < vehicleObjects.size()) {
+            Vehicle selectedVehicle = vehicleObjects.get(index);
+            try {
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("/view/vehicle/VehicleDetails.fxml"));
+                AnchorPane root = loader.load();
+                VehicleDetailsController controller = loader.getController();
+                Stage detailsStage = new Stage();
+                controller.setStage(detailsStage);
+                controller.setVehicle(selectedVehicle);
+                detailsStage.setScene(new Scene(root));
+                detailsStage.setTitle("Vehicle Details: " + selectedVehicle.getLicensePlate());
+                detailsStage.show();
+            } catch (IOException e) {
+                showAlert("Error", "Failed to load vehicle details.");
+                e.printStackTrace();
+            }
+        } else {
+            showAlert("No Selection", "Please select a vehicle to view details.");
+        }
+    }
+
     private void clearFields() {
-        idField.clear();
+        licensePlateField.clear();
         brandField.clear();
         modelField.clear();
         yearField.clear();
+        searchField.clear();
         vehicleListView.getSelectionModel().clearSelection();
     }
 
