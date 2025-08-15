@@ -27,7 +27,20 @@
     <StackPane fx:id="mainContentPane"
                AnchorPane.topAnchor="0" AnchorPane.leftAnchor="200" AnchorPane.rightAnchor="0" AnchorPane.bottomAnchor="0"
                style="-fx-background-color: #f4f4f4;">
-        <!-- Nội dung động sẽ được nạp vào đây -->
+        <!-- Nội dung Home mặc định -->
+        <VBox fx:id="homeContent" alignment="CENTER" spacing="20" visible="true">
+            <Label text="Dashboard" style="-fx-font-size: 24px; -fx-font-weight: bold;" />
+            <HBox spacing="20" alignment="CENTER">
+                <VBox style="-fx-background-color: white; -fx-padding: 20; -fx-border-color: #ccc; -fx-border-radius: 5;">
+                    <Label text="Tổng số phương tiện" style="-fx-font-size: 16px;" />
+                    <Label fx:id="totalVehicles" text="0" style="-fx-font-size: 24px; -fx-font-weight: bold;" />
+                </VBox>
+                <VBox style="-fx-background-color: white; -fx-padding: 20; -fx-border-color: #ccc; -fx-border-radius: 5;">
+                    <Label text="Tổng số hành trình" style="-fx-font-size: 16px;" />
+                    <Label fx:id="totalJourneys" text="0" style="-fx-font-size: 24px; -fx-font-weight: bold;" />
+                </VBox>
+            </HBox>
+        </VBox>
     </StackPane>
 
 </AnchorPane>

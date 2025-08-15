@@ -2,16 +2,20 @@ package model.vehicle;
 
 import com.mongodb.client.*;
 import model.MongoDBConnection;
+import model.journey.Journey;
+import model.journey.JourneyDatabase;
 import org.bson.Document;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class VehicleDatabase implements AutoCloseable {
     private MongoClient mongoClient;
     private MongoCollection<Document> collection;
 
     public VehicleDatabase() {
-        MongoDatabase database = MongoDBConnection.getDatabase();
+        this.mongoClient = MongoDBConnection.getMongoClient(); // Sử dụng singleton từ MongoDBConnection
+        MongoDatabase database = mongoClient.getDatabase(MongoDBConnection.DATABASE_NAME); // Sử dụng hằng số tĩnh
         this.collection = database.getCollection("vehicles");
     }
 
@@ -50,10 +54,9 @@ public class VehicleDatabase implements AutoCloseable {
         return vehicles;
     }
 
-    // ✅ Thêm chức năng tìm kiếm theo biển số
     public List<Vehicle> searchVehicleByLicensePlate(String licensePlate) {
         List<Vehicle> result = new ArrayList<>();
-        Document query = new Document("licensePlate", new Document("$regex", licensePlate).append("$options", "i")); // không phân biệt hoa thường
+        Document query = new Document("licensePlate", new Document("$regex", licensePlate).append("$options", "i"));
         FindIterable<Document> docs = collection.find(query);
         for (Document doc : docs) {
             result.add(documentToVehicle(doc));
@@ -61,17 +64,15 @@ public class VehicleDatabase implements AutoCloseable {
         return result;
     }
 
-    // ✅ Thêm phương thức getVehicleById
     public Vehicle getVehicleById(String vehicleId) {
         Document query = new Document("_id", vehicleId);
         Document doc = collection.find(query).first();
         if (doc != null) {
             return documentToVehicle(doc);
         }
-        return null; // Trả về null nếu không tìm thấy
+        return null;
     }
 
-    // Hàm hỗ trợ chuyển Document MongoDB thành đối tượng Vehicle
     private Vehicle documentToVehicle(Document doc) {
         String vehicleId = doc.getString("_id");
         String licensePlate = doc.getString("licensePlate");
@@ -94,10 +95,33 @@ public class VehicleDatabase implements AutoCloseable {
         return v;
     }
 
+    public void countAndUpdateTotalJourneys() {
+        // Lấy tất cả hành trình từ JourneyDatabase
+        JourneyDatabase journeyDb = new JourneyDatabase();
+        List<Journey> allJourneys;
+        try {
+            allJourneys = journeyDb.getAllJourneys();
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println("Lỗi khi truy cập JourneyDatabase: " + e.getMessage());
+            return;
+        } finally {
+
+        }
+
+        var journeyCounts = allJourneys.stream()
+                .collect(Collectors.groupingBy(Journey::getVehicleId, Collectors.counting()));
+
+        // Lấy danh sách tất cả xe
+        List<Vehicle> vehicles = getAllVehicles();
+        for (Vehicle vehicle : vehicles) {
+            long journeyCount = journeyCounts.getOrDefault(vehicle.getVehicleId(), 0L);
+            vehicle.setTotalJourneys((int) journeyCount); // Cập nhật số hành trình
+            updateVehicle(vehicle); // Cập nhật vào cơ sở dữ liệu
+        }
+    }
+
     @Override
     public void close() {
-        if (mongoClient != null) {
-            mongoClient.close();
-        }
     }
 }

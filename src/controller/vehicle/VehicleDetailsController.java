@@ -44,8 +44,12 @@ public class VehicleDetailsController {
     @FXML
     private void initialize() {
         // Gán các cột với giá trị từ Journey
-        tripIdColumn.setCellValueFactory(new PropertyValueFactory<>("vehicleId"));
-        averageSpeedColumn.setCellValueFactory(new PropertyValueFactory<>("averageSpeed"));
+        // tripIdColumn.setCellValueFactory(new PropertyValueFactory<>("id"));
+        averageSpeedColumn.setCellValueFactory(cellData -> {
+            Journey journey = cellData.getValue();
+            PerformanceReport report = journey.generatePerformanceReport();
+            return new javafx.beans.property.SimpleDoubleProperty(report.getAverageSpeed()).asObject();
+        });
         averageRpmColumn.setCellValueFactory(new PropertyValueFactory<>("averageRpm"));
         averageFuelConsumptionColumn.setCellValueFactory(cellData -> {
             Journey journey = cellData.getValue();

@@ -21,6 +21,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -33,6 +34,8 @@ public class JourneyController {
     @FXML private TextField searchField;
     @FXML private Button searchButton;
     @FXML private Button importCsvButton;
+    @FXML private Button viewReportButton;
+    @FXML private TextArea reportTextArea;
 
     private ObservableList<HBox> journeyList = FXCollections.observableArrayList();
     private Stage addStage;
@@ -41,9 +44,11 @@ public class JourneyController {
     public void initialize() {
         loadJourneys();
         setupListView();
-        addButton.setOnAction(event -> showAddJourney());
-        importCsvButton.setOnAction(event -> importFromCsv());
-        searchButton.setOnAction(event -> setupSearch());
+        if (addButton != null) addButton.setOnAction(event -> showAddJourney());
+        if (importCsvButton != null) importCsvButton.setOnAction(event -> importFromCsv());
+        if (searchButton != null) searchButton.setOnAction(event -> setupSearch());
+        if (viewReportButton != null) viewReportButton.setOnAction(event -> handleViewReport());
+        if (generateReportButton != null) generateReportButton.setOnAction(event -> handleGenerateReport());
     }
 
     private void loadJourneys() {
@@ -160,19 +165,90 @@ public class JourneyController {
     }
 
     @FXML
-    private void handleGenerateReport() {
-        int selectedIndex = journeyListView.getSelectionModel().getSelectedIndex();
-        if (selectedIndex < 0) {
-            showAlert("Lỗi", "Vui lòng chọn một hành trình để tạo báo cáo.");
-            return;
-        }
-        List<Journey> journeys = JourneyDatabase.getAllJourneys();
-        if (selectedIndex < journeys.size()) {
+    private void handleViewReport() {
+        try {
+            // Lấy hành trình được chọn
+            int selectedIndex = journeyListView.getSelectionModel().getSelectedIndex();
+            if (selectedIndex < 0) {
+                reportTextArea.setText("Vui lòng chọn một hành trình để xem báo cáo.");
+                return;
+            }
+
+            List<Journey> journeys = JourneyDatabase.getAllJourneys();
+            if (selectedIndex >= journeys.size()) {
+                reportTextArea.setText("Hành trình đã chọn không hợp lệ.");
+                return;
+            }
+
             Journey journey = journeys.get(selectedIndex);
-            PerformanceReport report = journey.generatePerformanceReport();
-            showAlert("Báo cáo hiệu suất", report.toString());
+            PerformanceReport report = PerformanceReport.fromJourney(journey);
+
+            // Hiển thị báo cáo trong TextArea
+            String reportText = String.format(
+                    "Báo cáo Hiệu suất Hành trình (ID: %s):\n" +
+                    "Vận tốc trung bình: %.2f km/h\n" +
+                    "Nhiên liệu trung bình: %.2f L/100km\n" +
+                    "Max RPM: %.0f\n" +
+                    "Quãng đường: %.2f km\n" +
+                    "Thời gian hoạt động: %s",
+                    journey.getId(),
+                    report.getAverageSpeed(),
+                    report.getAverageFuelConsumption(),
+                    report.getMaxRpm(),
+                    report.getTotalDistance(),
+                    PerformanceReport.formatDuration(report.getTotalOperatingTime())
+            );
+            reportTextArea.setText(reportText);
+        } catch (Exception e) {
+            reportTextArea.setText("Lỗi khi tạo báo cáo: " + e.getMessage());
+            e.printStackTrace();
         }
     }
+
+@FXML
+private void handleGenerateReport() {
+    try {
+        // Lấy chỉ mục hành trình được chọn trong ListView
+        int selectedIndex = journeyListView.getSelectionModel().getSelectedIndex();
+        if (selectedIndex < 0) {
+            showAlert(Alert.AlertType.WARNING, "Chưa chọn hành trình", "Vui lòng chọn một hành trình để xuất báo cáo.");
+            return;
+        }
+
+        // Lấy danh sách hành trình từ DB
+        List<Journey> journeys = JourneyDatabase.getAllJourneys();
+        if (selectedIndex >= journeys.size()) {
+            showAlert(Alert.AlertType.ERROR, "Lỗi", "Hành trình đã chọn không hợp lệ.");
+            return;
+        }
+
+        Journey journey = journeys.get(selectedIndex);
+
+        // Mở hộp thoại lưu file
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Lưu báo cáo PDF");
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("PDF Files", "*.pdf"));
+        File file = fileChooser.showSaveDialog(generateReportButton.getScene().getWindow());
+
+        if (file != null) {
+            // Xuất báo cáo PDF chỉ cho hành trình được chọn
+            PerformanceReport.exportToPdfFromJourneys(List.of(journey), file.getAbsolutePath());
+            showAlert(Alert.AlertType.INFORMATION, "Thành công", "Báo cáo đã được xuất thành công.");
+        }
+    } catch (Exception e) {
+        e.printStackTrace();
+        showAlert(Alert.AlertType.ERROR, "Lỗi", "Có lỗi xảy ra khi xuất báo cáo: " + e.getMessage());
+    }
+}
+
+private void showAlert(Alert.AlertType type, String title, String content) {
+    Alert alert = new Alert(type);
+    alert.setTitle(title);
+    alert.setHeaderText(null);
+    alert.setContentText(content);
+    alert.showAndWait();
+}
+
 
     private String getLicensePlateForVehicleId(String vehicleId) {
         try (VehicleDatabase db = new VehicleDatabase()) {

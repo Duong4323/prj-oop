@@ -62,7 +62,7 @@ public class Journey {
         this.measurementCount = this.sensorDataList.size();
     }
     public int getMeasurementCount() { return measurementCount; }
-    public void setMeasurementCount(int measurementCount) { this.measurementCount = measurementCount; } // Thêm phương thức này
+    public void setMeasurementCount(int measurementCount) { this.measurementCount = measurementCount; }
 
     public static Journey fromDocument(Document doc) {
         String id = doc.getObjectId("_id").toString();
@@ -103,6 +103,6 @@ public class Journey {
                 .append("maxRpm", maxRpm)
                 .append("fuelConsumption", fuelConsumption)
                 .append("sensorDataList", sensorDataList.stream().map(SensorReading::toDocument).toList())
-                .append("measurementCount", measurementCount); // Thêm vào tài liệu
+                .append("measurementCount", measurementCount);
     }
 }

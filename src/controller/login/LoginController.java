@@ -43,7 +43,7 @@ public class LoginController {
         }
         Stage stage = (Stage) usernameField.getScene().getWindow();
         stage.setScene(new Scene(mainView, 1000, 600));
-        stage.setTitle("Vehicle Performance Tracker - Dashboard");
+        stage.setTitle("Ứng dụng theo dõi xe");
     } catch (IOException e) {
         e.printStackTrace();
         showAlert("Error", "Cannot load main view. " + e.getMessage());

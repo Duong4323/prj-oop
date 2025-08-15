@@ -2,7 +2,6 @@ package model.journey;
 
 import com.mongodb.client.*;
 import model.MongoDBConnection;
-import model.vehicle.Vehicle;
 import model.vehicle.VehicleDatabase;
 import org.bson.Document;
 import org.bson.types.ObjectId;
@@ -20,7 +19,7 @@ public class JourneyDatabase {
                 .append("vehicleId", j.getVehicleId())
                 .append("totalTime", j.getTotalTime())
                 .append("distance", j.getDistance())
-                .append("", j.getAverageSpeed())
+                .append("averageSpeed", j.getAverageSpeed())
                 .append("averageRpm", j.getAverageRpm())
                 .append("maxRpm", j.getMaxRpm())
                 .append("fuelConsumption", j.getFuelConsumption())
@@ -33,23 +32,15 @@ public class JourneyDatabase {
         }
         System.out.println("Journey inserted successfully.");
 
-        updateVehicleJourneyCount(j.getVehicleId());
+        updateVehicleJourneyCount();
     }
 
-    private static void updateVehicleJourneyCount(String vehicleId) {
-        long count = collection.countDocuments(new Document("vehicleId", vehicleId));
-
+    private static void updateVehicleJourneyCount() {
         try (VehicleDatabase vehicleDb = new VehicleDatabase()) {
-            List<Vehicle> list = vehicleDb.getAllVehicles();
-            for (Vehicle v : list) {
-                if (v.getVehicleId().equals(vehicleId)) {
-                    v.setTotalJourneys((int) count);
-                    vehicleDb.updateVehicle(v);
-                    break;
-                }
-            }
+            vehicleDb.countAndUpdateTotalJourneys();
         } catch (Exception e) {
             e.printStackTrace();
+            System.out.println("Lỗi khi cập nhật tổng số hành trình của xe: " + e.getMessage());
         }
     }
 
@@ -81,7 +72,7 @@ public class JourneyDatabase {
         collection.updateOne(filter, update);
         System.out.println("Journey updated successfully.");
 
-        updateVehicleJourneyCount(journey.getVehicleId());
+        updateVehicleJourneyCount();
     }
 
     // Cập nhật phương thức deleteJourney sử dụng id
@@ -92,5 +83,7 @@ public class JourneyDatabase {
         Document filter = new Document("_id", new ObjectId(journeyId));
         collection.deleteOne(filter);
         System.out.println("Journey deleted successfully.");
+
+        updateVehicleJourneyCount();
     }
 }

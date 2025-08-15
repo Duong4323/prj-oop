@@ -9,19 +9,24 @@
     <children>
         <VBox spacing="15" layoutX="20" layoutY="20" prefWidth="660">
             <children>
-                <Label text="Journey Management" style="-fx-font-size: 18px; -fx-font-weight: bold;"/>
+                <Label text="Quản lý hành trình" style="-fx-font-size: 18px; -fx-font-weight: bold;"/>
 
                 <HBox spacing="10" alignment="CENTER_LEFT">
                     <Button fx:id="addButton" text="Add" onAction="#showAddJourney" style="-fx-font-size: 14px;"/>
-                    <Button fx:id="importCsvButton" text="Import CSV" onAction="#importFromCsv" style="-fx-font-size: 14px;"/> <!-- Thêm nút này -->
+                    <Button fx:id="importCsvButton" text="Import CSV" onAction="#importFromCsv" style="-fx-font-size: 14px;"/>
                     <TextField fx:id="searchField" promptText="Search by License or Distance" prefWidth="300"/>
                     <Button fx:id="searchButton" text="Search" onAction="#setupSearch" style="-fx-font-size: 14px;"/>
                 </HBox>
 
-                <Label text="Journey List" style="-fx-font-size: 14px; -fx-font-weight: bold;"/>
+                <Label text="Danh sách hành trình" style="-fx-font-size: 14px; -fx-font-weight: bold;"/>
                 <ListView fx:id="journeyListView" prefHeight="200" prefWidth="640"/>
+
+                <Label text="Báo cáo" style="-fx-font-size: 14px; -fx-font-weight: bold;"/>
+                <TextArea fx:id="reportTextArea" prefHeight="100" prefWidth="640" editable="false"/>
+
                 <HBox spacing="10" alignment="CENTER">
-                    <Button fx:id="generateReportButton" text="Generate Report" onAction="#handleGenerateReport" style="-fx-font-size: 14px;"/>
+                    <Button fx:id="viewReportButton" text="Xem Báo Cáo" onAction="#handleViewReport" style="-fx-font-size: 14px;"/>
+                    <Button fx:id="generateReportButton" text="Xuất PDF" onAction="#handleGenerateReport" style="-fx-font-size: 14px;"/>
                 </HBox>
             </children>
             <padding>

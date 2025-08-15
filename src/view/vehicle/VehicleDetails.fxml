@@ -25,16 +25,16 @@
         <Label text="Trip History" style="-fx-font-size: 16px; -fx-font-weight: bold;" VBox.vgrow="NEVER"/>
 
         <!-- Trips Table -->
-            <TableView fx:id="tripTableView" prefHeight="200.0" prefWidth="460.0">
-    <columns>
-        <TableColumn fx:id="tripIdColumn" text="Trip ID" />
-        <TableColumn fx:id="averageSpeedColumn" text="Vận tốc trung bình (km/h)" />
-        <TableColumn fx:id="averageRpmColumn" text="RPM trung bình" />
-        <TableColumn fx:id="averageFuelConsumptionColumn" text="Nhiên liệu trung bình (L/100km)" />
-        <TableColumn fx:id="distanceColumn" text="Quãng đường (km)" />
-        <TableColumn fx:id="totalTimeColumn" text="Thời gian (giờ)" />
-    </columns>
-</TableView>
+        <TableView fx:id="tripTableView" prefHeight="200.0" prefWidth="460.0">
+            <columns>
+                <!-- <TableColumn fx:id="tripIdColumn" text="Trip ID" prefWidth="80.0"/> -->
+                <TableColumn fx:id="averageSpeedColumn" text="Vận tốc trung bình (km/h)" prefWidth="100.0"/>
+                <TableColumn fx:id="averageRpmColumn" text="RPM trung bình" prefWidth="100.0"/>
+                <TableColumn fx:id="averageFuelConsumptionColumn" text="Nhiên liệu(L/100km)" prefWidth="120.0"/>
+                <TableColumn fx:id="distanceColumn" text="Quãng đường (km)" prefWidth="80.0"/>
+                <TableColumn fx:id="totalTimeColumn" text="Thời gian (giờ)" prefWidth="80.0"/>
+            </columns>
+        </TableView>
 
         <!-- Close Button -->
         <HBox spacing="10" alignment="CENTER">
